@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Piano Pro - Tự Học Đánh Đàn</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
+        }
+
+        /* Phần điều khiển */
+        .controls {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        button {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover { background: #c0392b; }
+        
+        .status {
+            margin-top: 10px;
+            font-size: 18px;
+            color: #f1c40f;
+            min-height: 24px;
+        }
+
+        /* Khung Đàn */
+        .piano-container {
+            background: #111;
+            padding: 20px 20px 10px 20px;
+            border-radius: 15px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.6), inset 0 2px 10px rgba(255,255,255,0.1);
+            display: flex;
+        }
+
+        .piano {
+            display: flex;
+            position: relative;
+        }
+
+        .key {
+            border: 1px solid #000;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            padding-bottom: 10px;
+            position: relative;
+            transition: background 0.1s;
+        }
+
+        .key span {
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .key .note-name { color: #888; font-size: 10px; margin-bottom: 2px; }
+
+        /* Phím trắng */
+        .white {
+            width: 50px;
+            height: 250px;
+            background: linear-gradient(to bottom, #fff 0%, #eee 100%);
+            color: #333;
+            z-index: 1;
+            border-radius: 0 0 5px 5px;
+            box-shadow: inset 0 1px 0px #fff, inset 0 -1px 2px #ccc, 2px 0 3px rgba(0,0,0,0.1);
+        }
+
+        /* Phím đen */
+        .black {
+            width: 30px;
+            height: 160px;
+            background: linear-gradient(to bottom, #333 0%, #000 100%);
+            color: #ccc;
+            z-index: 2;
+            margin-left: -15px;
+            margin-right: -15px;
+            border-radius: 0 0 3px 3px;
+            box-shadow: inset 0 1px 0px #555, inset 0 -2px 3px #000, 1px 0 3px rgba(0,0,0,0.5);
+        }
+
+        /* Hiệu ứng bấm phím */
+        .white.active {
+            background: #ddd;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.4);
+            height: 248px;
+            transform: translateY(2px);
+        }
+
+        .black.active {
+            background: #222;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.8);
+            height: 158px;
+            transform: translateY(2px);
+        }
+
+        /* HIỆU ỨNG HƯỚNG DẪN (TUTORIAL) */
+        .highlight-tutorial {
+            background: #ffeaa7 !important; /* Màu vàng nhạt cho phím trắng */
+            box-shadow: 0 0 20px 5px #fdcb6e inset !important;
+        }
+        
+        .black.highlight-tutorial {
+            background: #d63031 !important; /* Màu đỏ cho phím đen */
+            box-shadow: 0 0 15px 2px #ff7675 inset !important;
+        }
+
+        .instructions {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #bdc3c7;
+            text-align: center;
+            max-width: 600px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="controls">
+        <h1>🎹 Piano Pro & Lớp Học Ảo</h1>
+        <div style="margin-bottom: 15px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+            <select id="song-select" style="padding: 10px; font-size: 16px; border-radius: 5px; cursor: pointer; border: none; font-weight: bold; color: #333;">
+                <option value="happy_birthday">Happy Birthday</option>
+                <option value="twinkle_twinkle">Twinkle Twinkle Little Star</option>
+                <option value="jingle_bells">Jingle Bells</option>
+                <option value="ode_to_joy">Ode To Joy</option>
+            </select>
+            <button id="btn-tutorial" onclick="toggleTutorial()">Bắt đầu học</button>
+        </div>
+        <div class="status" id="status-text">Chế độ tự do: Chơi bất cứ bài nào bạn thích!</div>
+    </div>
+
+    <div class="piano-container">
+        <div class="piano" id="piano-board">
+            <!-- Các phím đàn sẽ được tạo bằng JavaScript để code HTML gọn gàng -->
+        </div>
+    </div>
+
+    <div class="instructions">
+        <p>Gõ các chữ cái trên bàn phím (Q, W, E, R... cho quãng tám dưới | Z, X, C, V... cho quãng tám trên) hoặc dùng chuột.</p>
+        <p>Hệ thống hỗ trợ <b>Đa âm (Polyphony)</b>: Bạn có thể bấm nhiều phím cùng lúc để tạo hợp âm!</p>
+    </div>
+
+    <script>
+        // --- 1. CẤU HÌNH DỮ LIỆU PIANO ---
+        // Danh sách 25 phím (2 quãng tám: C4 đến C6)
+        const pianoKeys =[
+            { note: 'C4', freq: 261.63, key: 'q', type: 'white' },
+            { note: 'C#4', freq: 277.18, key: '2', type: 'black' },
+            { note: 'D4', freq: 293.66, key: 'w', type: 'white' },
+            { note: 'D#4', freq: 311.13, key: '3', type: 'black' },
+            { note: 'E4', freq: 329.63, key: 'e', type: 'white' },
+            { note: 'F4', freq: 349.23, key: 'r', type: 'white' },
+            { note: 'F#4', freq: 369.99, key: '5', type: 'black' },
+            { note: 'G4', freq: 392.00, key: 't', type: 'white' },
+            { note: 'G#4', freq: 415.30, key: '6', type: 'black' },
+            { note: 'A4', freq: 440.00, key: 'y', type: 'white' },
+            { note: 'A#4', freq: 466.16, key: '7', type: 'black' },
+            { note: 'B4', freq: 493.88, key: 'u', type: 'white' },
+            
+            { note: 'C5', freq: 523.25, key: 'z', type: 'white' },
+            { note: 'C#5', freq: 554.37, key: 's', type: 'black' },
+            { note: 'D5', freq: 587.33, key: 'x', type: 'white' },
+            { note: 'D#5', freq: 622.25, key: 'd', type: 'black' },
+            { note: 'E5', freq: 659.25, key: 'c', type: 'white' },
+            { note: 'F5', freq: 698.46, key: 'v', type: 'white' },
+            { note: 'F#5', freq: 739.99, key: 'g', type: 'black' },
+            { note: 'G5', freq: 783.99, key: 'b', type: 'white' },
+            { note: 'G#5', freq: 830.61, key: 'h', type: 'black' },
+            { note: 'A5', freq: 880.00, key: 'n', type: 'white' },
+            { note: 'A#5', freq: 932.33, key: 'j', type: 'black' },
+            { note: 'B5', freq: 987.77, key: 'm', type: 'white' },
+            
+            { note: 'C6', freq: 1046.50, key: ',', type: 'white' } // Nốt kết thúc
+        ];
+
+        // --- 2. TẠO GIAO DIỆN PIANO BẰNG JAVASCRIPT ---
+        const pianoBoard = document.getElementById('piano-board');
+        const keyElements = {}; // Lưu trữ DOM của các phím
+
+        pianoKeys.forEach(k => {
+            const div = document.createElement('div');
+            div.className = `key ${k.type}`;
+            div.dataset.note = k.note;
+            div.dataset.key = k.key;
+            
+            div.innerHTML = `
+                <span class="note-name">${k.note}</span>
+                <span>${k.key.toUpperCase()}</span>
+            `;
+            
+            // Xử lý click chuột
+            div.addEventListener('mousedown', () => pressKey(k.note));
+            div.addEventListener('mouseup', () => releaseKey(k.note));
+            div.addEventListener('mouseleave', () => releaseKey(k.note));
+
+            pianoBoard.appendChild(div);
+            keyElements[k.note] = { elem: div, freq: k.freq, mapKey: k.key };
+        });
+
+        // --- 3. ĐỘNG CƠ ÂM THANH (AUDIO ENGINE) CHÂN THỰC ---
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = new AudioContext();
+        const activeOscillators = {}; // Lưu trữ các nốt đang phát để hỗ trợ đa âm
+
+        function playSound(note, freq) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            
+            // Nếu nốt này đang kêu, dừng nó lại trước khi phát mới
+            if (activeOscillators[note]) {
+                activeOscillators[note].gainNode.gain.cancelScheduledValues(audioCtx.currentTime);
+                activeOscillators[note].osc.stop();
+            }
+
+            // Tạo âm thanh pha trộn (Sine + Triangle) cho giống piano hơn
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            osc.type = 'triangle'; // Âm sắc chính
+            osc.frequency.value = freq;
+
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            // ADSR Envelope (Mô phỏng độ ngân của đàn thật)
+            const now = audioCtx.currentTime;
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(1, now + 0.02); // Tấn công (Attack)
+            gainNode.gain.exponentialRampToValueAtTime(0.3, now + 0.3); // Suy giảm (Decay)
+
+            osc.start(now);
+            
+            // Lưu lại để có thể ngắt âm khi nhả phím
+            activeOscillators[note] = { osc, gainNode };
+        }
+
+        function stopSound(note) {
+            if (activeOscillators[note]) {
+                const now = audioCtx.currentTime;
+                const gainNode = activeOscillators[note].gainNode;
+                
+                // Nhả phím: Âm thanh không tắt bụp ngay mà giảm dần nhẹ (Release)
+                gainNode.gain.cancelScheduledValues(now);
+                gainNode.gain.setValueAtTime(gainNode.gain.value, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.5); // Tắt sau 0.5s
+                
+                activeOscillators[note].osc.stop(now + 0.5);
+                delete activeOscillators[note];
+            }
+        }
+
+        // --- 4. HỆ THỐNG HƯỚNG DẪN (TUTORIAL MODE) ---
+        // Thư viện bản nhạc
+        const songLibrary = {
+            "happy_birthday": [
+                'G4', 'G4', 'A4', 'G4', 'C5', 'B4', // Happy birthday to you
+                'G4', 'G4', 'A4', 'G4', 'D5', 'C5', // Happy birthday to you
+                'G4', 'G4', 'G5', 'E5', 'C5', 'B4', 'A4', // Happy birthday dear...
+                'F5', 'F5', 'E5', 'C5', 'D5', 'C5'  // Happy birthday to you
+            ],
+            "twinkle_twinkle": [
+                'C4', 'C4', 'G4', 'G4', 'A4', 'A4', 'G4',
+                'F4', 'F4', 'E4', 'E4', 'D4', 'D4', 'C4',
+                'G4', 'G4', 'F4', 'F4', 'E4', 'E4', 'D4',
+                'G4', 'G4', 'F4', 'F4', 'E4', 'E4', 'D4',
+                'C4', 'C4', 'G4', 'G4', 'A4', 'A4', 'G4',
+                'F4', 'F4', 'E4', 'E4', 'D4', 'D4', 'C4'
+            ],
+            "jingle_bells": [
+                'E4', 'E4', 'E4',   'E4', 'E4', 'E4',   'E4', 'G4', 'C4', 'D4', 'E4',
+                'F4', 'F4', 'F4', 'F4',   'F4', 'E4', 'E4', 'E4', 'E4',   'E4', 'D4', 'D4', 'E4',   'D4', 'G4'
+            ],
+            "ode_to_joy": [
+                'E4', 'E4', 'F4', 'G4',   'G4', 'F4', 'E4', 'D4',
+                'C4', 'C4', 'D4', 'E4',   'E4', 'D4', 'D4'
+            ]
+        };
+
+        let currentSongNotes = songLibrary["happy_birthday"];
+        let isTutorialMode = false;
+        let currentNoteIndex = 0;
+
+        document.getElementById('song-select').addEventListener('change', function(e) {
+            currentSongNotes = songLibrary[e.target.value];
+            if (isTutorialMode) {
+                // Tắt chế độ học nếu đang bật và chuyển bài
+                toggleTutorial();
+            }
+        });
+
+        function toggleTutorial() {
+            const btn = document.getElementById('btn-tutorial');
+            const status = document.getElementById('status-text');
+            const songSelect = document.getElementById('song-select');
+
+            isTutorialMode = !isTutorialMode;
+
+            if (isTutorialMode) {
+                const songName = songSelect.options[songSelect.selectedIndex].text;
+                btn.innerText = "Dừng học";
+                btn.style.background = "#e67e22";
+                songSelect.disabled = true; // Không cho đổi bài khi đang học
+                status.innerText = `Đang học: ${songName} - Hãy bấm phím đang phát sáng!`;
+                currentNoteIndex = 0;
+                highlightNextNote();
+            } else {
+                btn.innerText = "Bắt đầu học";
+                btn.style.background = "#e74c3c";
+                songSelect.disabled = false;
+                status.innerText = "Chế độ tự do: Chơi bất cứ bài nào bạn thích!";
+                clearHighlights();
+            }
+        }
+
+        function highlightNextNote() {
+            clearHighlights();
+            if (currentNoteIndex < currentSongNotes.length) {
+                const nextNote = currentSongNotes[currentNoteIndex];
+                const keyElem = keyElements[nextNote].elem;
+                if (keyElem) {
+                    keyElem.classList.add('highlight-tutorial');
+                }
+            } else {
+                document.getElementById('status-text').innerText = "🎉 Tuyệt vời! Bạn đã hoàn thành bài hát!";
+                setTimeout(toggleTutorial, 3000); // Tự tắt sau 3 giây
+            }
+        }
+
+        function clearHighlights() {
+            document.querySelectorAll('.key').forEach(k => k.classList.remove('highlight-tutorial'));
+        }
+
+        function checkTutorial(playedNote) {
+            if (!isTutorialMode) return;
+            
+            const expectedNote = currentSongNotes[currentNoteIndex];
+            if (playedNote === expectedNote) {
+                currentNoteIndex++;
+                highlightNextNote();
+            }
+        }
+
+        // --- 5. XỬ LÝ SỰ KIỆN NHẤN PHÍM CHUNG ---
+        const pressedKeys = new Set(); // Tránh lặp phím khi giữ chặt bàn phím
+
+        function pressKey(note) {
+            const keyData = keyElements[note];
+            if (!keyData) return;
+
+            keyData.elem.classList.add('active');
+            playSound(note, keyData.freq);
+            checkTutorial(note);
+        }
+
+        function releaseKey(note) {
+            const keyData = keyElements[note];
+            if (!keyData) return;
+
+            keyData.elem.classList.remove('active');
+            stopSound(note);
+        }
+
+        // --- 6. GẮN PHÍM MÁY TÍNH ---
+        // Tạo map ngược từ bàn phím máy tính ra Nốt nhạc
+        const keyboardMap = {};
+        pianoKeys.forEach(k => { keyboardMap[k.key] = k.note; });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.repeat) return; // Bỏ qua việc giữ phím lặp
+            const keyChar = e.key.toLowerCase();
+            const note = keyboardMap[keyChar];
+            
+            if (note && !pressedKeys.has(keyChar)) {
+                pressedKeys.add(keyChar);
+                pressKey(note);
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            const keyChar = e.key.toLowerCase();
+            const note = keyboardMap[keyChar];
+            
+            if (note) {
+                pressedKeys.delete(keyChar);
+                releaseKey(note);
+            }
+        });
+    </script>
+</body>
+</html>
